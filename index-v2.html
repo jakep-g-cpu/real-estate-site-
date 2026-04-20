@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Styling for the dashboard */
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .property { margin-bottom: 30px; }
+        .slider { width: 100%; }
+    </style>
+</head>
+<body>
+    <h1>Real Estate Dashboard</h1>
+    <div>
+        <label for="year-toggle">Select Year:</label>
+        <select id="year-toggle">
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+        </select>
+    </div>
+    <div class="property" data-year="2023">
+        <h2>Property 1</h2>
+        <p>Projected Value: <span class="value" data-value-2022="300000" data-value-2023="320000">$320,000</span></p>
+        <p>Rent: $1,500/month</p>
+    </div>
+    <div class="property" data-year="2023">
+        <h2>Property 2</h2>
+        <p>Projected Value: <span class="value" data-value-2022="400000" data-value-2023="420000">$420,000</span></p>
+        <p>Rent: $2,000/month</p>
+    </div>
+    <div>
+        <h2>Pro Forma Calculations</h2>
+        <p>IRR: <span id="irr">N/A</span></p>
+        <p>MOIC: <span id="moic">N/A</span></p>
+    </div>
+    <h2>Rent Growth Sensitivity</h2>
+    <input type="range" id="rent-slider" class="slider" min="1000" max="3000" step="100" value="1500">
+    <p>Current Rent: <span id="current-rent">$1,500</span></p>
+    <script>
+        $(document).ready(function() {
+            $('#year-toggle').change(function() {
+                var selectedYear = $(this).val();
+                $('.value').each(function() {
+                    var newValue = $(this).data('value-' + selectedYear);
+                    $(this).text('$' + newValue);
+                });
+                updateCalculations();
+            });
+            $('#rent-slider').on('input', function() {
+                var rent = $(this).val();
+                $('#current-rent').text('$' + rent);
+                updateCalculations();
+            });
+            function updateCalculations() {
+                // Placeholder for IRR and MOIC calculations
+                $('#irr').text('Calculated IRR');
+                $('#moic').text('Calculated MOIC');
+            }
+        });
+    </script>
+</body>
+</html>
