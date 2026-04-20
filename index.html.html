@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#eef2f7;color:#1a2744;display:flex;height:100vh;overflow:hidden;font-size:13px}
+#sb{width:214px;min-width:214px;background:#0d2b57;display:flex;flex-direction:column;overflow-y:auto}
+.logo{padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.logo-t{font-size:12px;font-weight:600;color:#fff;letter-spacing:.5px}
+.logo-s{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+.prop-area{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.prop-area>label{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px}
+#propSel{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:11px;padding:6px 8px;cursor:pointer;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,.5)'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+#propSel option{background:#0d2b57}
+.port-toggle{display:flex;align-items:center;gap:5px;margin-top:6px;cursor:pointer;font-size:10.5px;color:rgba(255,255,255,.45);padding:2px 0;user-select:none}
+.port-toggle:hover{color:rgba(255,255,255,.75)}
+#port-builder{display:none;margin-top:7px;background:rgba(0,0,0,.2);border-radius:7px;padding:9px}
+#port-builder.open{display:block}
+.port-name-inp{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:5px;color:#fff;font-size:11px;padding:5px 7px;margin-bottom:6px;font-family:inherit}
+.port-name-inp::placeholder{color:rgba(255,255,255,.3)}
+.port-check{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;color:rgba(255,255,255,.65);cursor:pointer}
+.port-check input{accent-color:#4da3ff;width:12px;height:12px}
+.port-btns{display:flex;gap:5px;margin-top:7px}
+.pbtn{flex:1;font-size:10px;padding:5px;border-radius:5px;border:none;cursor:pointer;font-weight:500}
+.pbtn.save{background:#4da3ff;color:#fff}
+.pbtn.cancel{background:rgba(255,255,255,.12);color:rgba(255,255,255,.7)}
+.saved-section{padding:6px 12px 2px}
+.saved-section>label{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px;margin-top:8px}
+.port-pill{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:5px 8px;margin-bottom:4px;cursor:pointer;transition:.15s}
+.port-pill:hover,.port-pill.on{background:rgba(77,163,255,.18);border-color:rgba(77,163,255,.35)}
+.pp-info{flex:1}
+.pp-name{font-size:11px;color:rgba(255,255,255,.8);font-weight:500}
+.pp-sub{font-size:9px;color:rgba(255,255,255,.4);margin-top:1px}
+.pp-del{font-size:11px;color:rgba(255,255,255,.25);padding:0 3px;line-height:1;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3)}
+.pp-del:hover{color:#ff6b6b}
+nav{flex:1;padding:4px 0}
+.nb{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;padding:10px 14px 3px}
+.ni{padding:8px 14px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.55);border-left:3px solid transparent;transition:.15s}
+.ni:hover{color:#fff;background:rgba(255,255,255,.06)}
+.ni.on{color:#fff;background:rgba(255,255,255,.1);border-left-color:#4da3ff}
+.sf{padding:10px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:10px;color:rgba(255,255,255,.3)}
+#main{flex:1;overflow-y:auto;padding:20px}
+.pg{display:none}.pg.on{display:block}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.pt{font-size:17px;font-weight:600;color:#0d2b57}
+.ps{font-size:11px;color:#7a8aaa;margin-top:2px}
+.fb{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.fb button{font-size:11px;padding:5px 11px;border:1px solid #c5d0e0;border-radius:6px;background:#fff;color:#1a2744;cursor:pointer}
+.fb button.on{background:#0d2b57;color:#fff;border-color:#0d2b57}
+.msel{font-size:11px;padding:5px 8px;border:1px solid #c5d0e0;border-radius:6px;background:#fff;display:none}
+.msel.vis{display:block}
+.af-panel{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:13px 15px;margin-bottom:13px;display:none}
+.af-panel.open{display:block}
+.af-grid{display:grid;gap:9px}
+.af-g{display:flex;flex-direction:column;gap:3px}
+.af-l{font-size:9.5px;color:#7a8aaa;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.af-i{border:1px solid #cdd8e8;border-radius:6px;padding:5px 8px;font-size:11.5px;color:#1a2744;font-family:inherit}
+.af-act{display:flex;gap:7px;margin-top:8px}
+.af-btn{font-size:11px;padding:5px 13px;border-radius:6px;border:none;cursor:pointer;font-weight:500}
+.af-btn.apply{background:#0d2b57;color:#fff}
+.af-btn.reset{background:#f0f4fb;color:#1a2744;border:1px solid #cdd8e8}
+.kg{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
+.kc{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:13px 15px}
+.kl{font-size:10px;color:#7a8aaa;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.kv{font-size:19px;font-weight:600;color:#0d2b57;margin:3px 0 4px}
+.kb{display:inline-flex;font-size:10px;padding:2px 7px;border-radius:5px}
+.kb.u{background:#eaf3de;color:#3b6d11}.kb.d{background:#fde8e8;color:#a32d2d}.kb.w{background:#fef3dc;color:#85500b}.kb.i{background:#e3effe;color:#1855a5}
+.cc{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:14px;margin-bottom:12px}
+.ct{font-size:12px;font-weight:600;color:#0d2b57;margin-bottom:3px}
+.cs{font-size:10px;color:#7a8aaa;margin-bottom:8px}
+.cw{position:relative;width:100%}
+.cr2{display:grid;grid-template-columns:2fr 1fr;gap:11px;margin-bottom:12px}
+.cr12{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px}
+.sc{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:14px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;color:#7a8aaa;font-weight:500;text-transform:uppercase;letter-spacing:.3px;padding:0 7px 7px;border-bottom:1px solid #e5eaf2;text-align:left;white-space:nowrap}
+td{padding:7px;border-bottom:.5px solid #f2f5fa;vertical-align:middle;font-size:12px}
+tr:last-child td{border-bottom:none}
+.sb{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.sb.current{background:#eaf3de;color:#3b6d11}.sb.delinquent{background:#fde8e8;color:#a32d2d}.sb.partial{background:#fef3dc;color:#85500b}.sb.vacant{background:#f0f2f5;color:#7a8aaa}.sb.active{background:#e3effe;color:#1855a5}.sb.complete{background:#eaf3de;color:#3b6d11}.sb.planned{background:#f0edfe;color:#5040b0}
+.vp{color:#3b6d11;font-weight:500}.vn{color:#a32d2d;font-weight:500}
+.pb{height:5px;background:#e5eaf2;border-radius:3px;overflow:hidden;min-width:55px}
+.pf{height:100%;border-radius:3px}
+.ni-item{display:flex;gap:10px;padding:9px 0;border-bottom:.5px solid #f2f5fa}
+.ni-item:last-child{border-bottom:none}
+.av{width:28px;height:28px;border-radius:50%;background:#e3effe;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1855a5;flex-shrink:0}
+.nm{font-size:10px;color:#7a8aaa;margin-bottom:2px}
+.nt{font-size:11.5px;color:#1a2744;line-height:1.5}
+.ntag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:#e3effe;color:#1855a5;margin-left:4px}
+.lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:7px;font-size:10.5px;color:#7a8aaa}
+.ld{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+.rc-lbl{font-size:11px;color:#7a8aaa;margin-bottom:7px}
+/* portfolio multi-view */
+.port-summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:14px}
+.psc{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:13px 15px}
+.psc-name{font-size:12px;font-weight:600;color:#0d2b57;margin-bottom:8px;padding-bottom:7px;border-bottom:.5px solid #e5eaf2}
+.psc-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;border-bottom:.5px solid #f5f7fb}
+.psc-row:last-child{border-bottom:none}
+.psc-lbl{color:#7a8aaa}
+.psc-val{font-weight:500}
+/* AI */
+.ai-bar{background:#0d2b57;border-radius:10px;padding:15px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.ai-bt{color:#fff;font-size:13px;font-weight:600;margin-bottom:2px}
+.ai-bs{font-size:10.5px;color:rgba(255,255,255,.55)}
+.ai-btn{background:#4da3ff;color:#fff;border:none;border-radius:7px;padding:8px 15px;font-size:12px;font-weight:500;cursor:pointer}
+.ai-btn:disabled{background:#5a6a88;cursor:not-allowed}
+.ins{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:12px 14px;margin-bottom:8px;display:flex;gap:10px}
+.ii{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.ii.risk{background:#fde8e8}.ii.warn{background:#fef3dc}.ii.good{background:#eaf3de}.ii.info{background:#e3effe}
+.it{font-size:12px;font-weight:600;color:#0d2b57;margin-bottom:2px}
+.ix{font-size:11.5px;color:#444;line-height:1.5}
+.itag{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;margin-top:4px;font-weight:500}
+.itag.risk{background:#fde8e8;color:#a32d2d}.itag.warn{background:#fef3dc;color:#85500b}.itag.good{background:#eaf3de;color:#3b6d11}.itag.info{background:#e3effe;color:#1855a5}
+.spin{width:24px;height:24px;border:3px solid #e5eaf2;border-top-color:#378add;border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Reports */
+.rb{display:grid;grid-template-columns:260px 1fr;gap:13px;align-items:start}
+.rc{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:14px}
+.rc h3{font-size:12px;font-weight:600;color:#0d2b57;margin-bottom:10px}
+.rl{font-size:9.5px;color:#7a8aaa;font-weight:500;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+.ri{width:100%;border:1px solid #cdd8e8;border-radius:6px;padding:6px 8px;font-size:11.5px;color:#1a2744;margin-bottom:10px}
+.tg{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid #f2f5fa;font-size:11.5px}
+.tg:last-of-type{border-bottom:none}
+.sw{position:relative;width:32px;height:17px;cursor:pointer}
+.sw input{opacity:0;width:0;height:0}
+.ss{position:absolute;inset:0;background:#cdd8e8;border-radius:10px;transition:.2s}
+.ss:before{content:'';position:absolute;width:11px;height:11px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked+.ss{background:#378add}
+.sw input:checked+.ss:before{transform:translateX(15px)}
+.eb{width:100%;background:#0d2b57;color:#fff;border:none;border-radius:7px;padding:8px;font-size:11.5px;font-weight:500;cursor:pointer;margin-top:9px}
+.eb.sec{background:#185fa5;margin-top:5px}
+.rpw{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;overflow:hidden}
+.rtb{background:#f5f7fb;border-bottom:1px solid #e5eaf2;padding:8px 12px;display:flex;justify-content:space-between;font-size:10.5px;color:#7a8aaa}
+.rpage{padding:26px 30px;font-family:Georgia,serif}
+.rtp{text-align:center;padding:40px 26px;border-bottom:2px solid #e5eaf2;margin-bottom:22px}
+.rlm{width:38px;height:38px;background:#0d2b57;border-radius:7px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700}
+.rcn{font-size:18px;font-weight:700;color:#0d2b57;margin-bottom:4px}
+.rpn{font-size:13px;color:#444}
+.rpr{font-size:11px;color:#7a8aaa;margin-top:3px}
+.rs{margin-bottom:22px}
+.rst{font-size:13px;font-weight:700;color:#0d2b57;border-bottom:2px solid #0d2b57;padding-bottom:4px;margin-bottom:10px;font-family:-apple-system,sans-serif}
+.rt{width:100%;border-collapse:collapse;font-size:10.5px;font-family:-apple-system,sans-serif}
+.rt th{padding:4px 6px;background:#f0f4fb;color:#1a2744;font-weight:600;border:1px solid #cdd8e8;text-align:left}
+.rt td{padding:4px 6px;border:1px solid #e5eaf2;color:#1a2744}
+.rt tr:nth-child(even) td{background:#fafbfd}
+.rt .sub td{background:#dde8f8;font-weight:600}
+.rt .tot td{background:#0d2b57;color:#fff;font-weight:600}
+/* Leasing */
+.pipe{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:3px}
+.pc{min-width:165px;background:#f5f7fb;border-radius:8px;border:.5px solid #cdd8e8;padding:9px}
+.ph2{font-size:9.5px;font-weight:600;color:#7a8aaa;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.pct{background:#e5eaf2;color:#1a2744;border-radius:10px;padding:1px 5px;font-size:9px}
+.dc{background:#fff;border-radius:6px;border:.5px solid #cdd8e8;padding:7px 9px;margin-bottom:5px}
+.dn{font-size:11.5px;font-weight:500;color:#0d2b57;margin-bottom:2px}
+.dm{font-size:10px;color:#7a8aaa}
+.ds{font-size:10px;font-weight:500;color:#1855a5;margin-top:2px}
+.lf{background:#fff;border-radius:9px;border:.5px solid #cdd8e8;padding:14px;margin-bottom:12px}
+.fg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.fl{font-size:9.5px;color:#7a8aaa;font-weight:500;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.fi{border:1px solid #cdd8e8;border-radius:6px;padding:5px 8px;font-size:11.5px;color:#1a2744;font-family:inherit;width:100%}
+.ft{resize:vertical;min-height:48px;font-family:inherit;border:1px solid #cdd8e8;border-radius:6px;padding:5px 8px;font-size:11.5px;color:#1a2744;width:100%;margin-bottom:8px}
+.sbtn{background:#0d2b57;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11.5px;font-weight:500;cursor:pointer}
+.at{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;margin-bottom:2px}
+.at.tour{background:#e3effe;color:#1855a5}.at.loi{background:#f0edfe;color:#5040b0}.at.update{background:#eaf3de;color:#3b6d11}.at.offer{background:#fef3dc;color:#85500b}
+</style>
+</head>
+<body>
+<div id="sb">
+  <div class="logo"><div class="logo-t">CRE Intelligence</div><div class="logo-s">Financial Dashboard</div></div>
+  <div class="prop-area">
+    <label>Active Property</label>
+    <select id="propSel">
+      <option value="w">Westlake Commerce Center</option>
+      <option value="m">Meridian Business Park</option>
+      <option value="o">Oakridge Plaza</option>
+      <option value="s">Summit Office Tower</option>
+    </select>
+    <div class="port-toggle" onclick="togglePortBuilder()">
+      <span id="ptIcon">＋</span> <span>Create Portfolio View</span>
+    </div>
+    <div id="port-builder">
+      <input class="port-name-inp" id="port-name" placeholder="Portfolio name (e.g. Texas Assets)">
+      <div id="port-checks"></div>
+      <div class="port-btns">
+        <button class="pbtn save" onclick="savePortfolio()">Save</button>
+        <button class="pbtn cancel" onclick="togglePortBuilder()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div class="saved-section" id="saved-section"></div>
+  <nav>
+    <div class="nb">Analytics</div>
+    <div class="ni on" data-p="overview">Portfolio Overview</div>
+    <div class="ni" data-p="budget">Budget vs. Actuals</div>
+    <div class="ni" data-p="tenants">Tenant Ledger</div>
+    <div class="ni" data-p="asset">Asset Management</div>
+    <div class="nb">Operations</div>
+    <div class="ni" data-p="projects">Capital Projects</div>
+    <div class="ni" data-p="notes">PM Notes</div>
+    <div class="ni" data-p="leasing">Leasing Hub</div>
+    <div class="nb">Intelligence</div>
+    <div class="ni" data-p="ai">AI Insights</div>
+    <div class="ni" data-p="reports">Export Reports</div>
+  </nav>
+  <div class="sf">MRI Sync: Today 6:42 AM</div>
+</div>
+
+<div id="main">
+<!-- OVERVIEW -->
+<div class="pg on" id="pg-overview">
+  <div class="ph">
+    <div><div class="pt" id="ov-title">Portfolio Overview</div><div class="ps" id="ov-sub"></div></div>
+    <div class="fb">
+      <button class="on" data-period="ytd">YTD</button><button data-period="q1">Q1</button><button data-period="q2">Q2</button><button data-period="q3">Q3</button><button data-period="month">Month</button>
+      <select class="msel" id="ov-ms"><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5" selected>Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+    </div>
+  </div>
+  <div class="kg" id="ov-kpis"></div>
+  <div id="ov-port-grid"></div>
+  <div id="ov-charts">
+    <div class="cr2">
+      <div class="cc"><div class="ct">Revenue vs. Budget</div><div class="cs" id="ov-cs"></div><div class="lg"><span><span class="ld" style="background:#378add"></span>Actual</span><span><span class="ld" style="background:#c0dd97;border:1px solid #639922"></span>Budget</span></div><div class="cw" style="height:180px"><canvas id="revChart"></canvas></div></div>
+      <div class="cc"><div class="ct">Expense Breakdown</div><div class="cs">YTD by category</div><div class="lg"><span><span class="ld" style="background:#378add"></span>CAM</span><span><span class="ld" style="background:#1d9e75"></span>Util</span><span><span class="ld" style="background:#ef9f27"></span>Mgmt</span><span><span class="ld" style="background:#d85a30"></span>Maint</span></div><div class="cw" style="height:180px"><canvas id="expChart"></canvas></div></div>
+    </div>
+    <div class="cc"><div class="ct">NOI Trend — Trailing 12 Months</div><div class="cw" style="height:140px"><canvas id="noiChart"></canvas></div></div>
+  </div>
+</div>
+<!-- BUDGET -->
+<div class="pg" id="pg-budget">
+  <div class="ph">
+    <div><div class="pt" id="bv-title">Budget vs. Actuals</div><div class="ps" id="bv-sub"></div></div>
+    <div class="fb">
+      <button class="on" data-period="ytd">YTD</button><button data-period="q1">Q1</button><button data-period="q2">Q2</button><button data-period="q3">Q3</button><button data-period="month">Month</button>
+      <select class="msel" id="bv-ms"><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option><option value="4">May</option><option value="5" selected>Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option></select>
+      <button onclick="toggleAF('af-bv')">⚙ Filters</button>
+    </div>
+  </div>
+  <div class="af-panel" id="af-bv">
+    <div class="af-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="af-g"><div class="af-l">Show Lines</div><select class="af-i" id="bv-show"><option value="all">All Lines</option><option value="income">Income Only</option><option value="expense">Expenses Only</option></select></div>
+      <div class="af-g"><div class="af-l">Variance Direction</div><select class="af-i" id="bv-var"><option value="all">All</option><option value="unfav">Unfavorable Only</option><option value="fav">Favorable Only</option></select></div>
+      <div class="af-g"><div class="af-l">Min Variance $</div><input type="number" class="af-i" id="bv-minv" placeholder="e.g. 5000"></div>
+    </div>
+    <div class="af-act"><button class="af-btn apply" onclick="renderBudget()">Apply</button><button class="af-btn reset" onclick="document.getElementById('bv-show').value='all';document.getElementById('bv-var').value='all';document.getElementById('bv-minv').value='';renderBudget()">Reset</button></div>
+  </div>
+  <div class="sc"><div class="ct" style="margin-bottom:9px">Income</div><table id="inc-tbl"></table></div>
+  <div class="sc"><div class="ct" style="margin-bottom:9px">Expenses</div><table id="exp-tbl"></table></div>
+</div>
+<!-- TENANTS -->
+<div class="pg" id="pg-tenants">
+  <div class="ph">
+    <div><div class="pt" id="tl-title">Tenant Ledger</div><div class="ps" id="tl-sub"></div></div>
+    <div class="fb">
+      <button class="on" data-f="all">All</button><button data-f="delinquent">Delinquent</button><button data-f="current">Current</button><button data-f="vacant">Vacant</button>
+      <button onclick="toggleAF('af-ten')">⚙ Filters</button>
+    </div>
+  </div>
+  <div class="af-panel" id="af-ten">
+    <div class="af-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="af-g"><div class="af-l">Sort By</div><select class="af-i" id="ten-sort"><option value="">Default</option><option value="rent-d">Rent: High→Low</option><option value="rent-a">Rent: Low→High</option><option value="bal-d">Balance: High→Low</option><option value="exp-a">Expiry: Soonest</option><option value="exp-d">Expiry: Latest</option><option value="sf-d">Sq Ft: Largest</option></select></div>
+      <div class="af-g"><div class="af-l">Expiring Within</div><select class="af-i" id="ten-expw"><option value="">Any</option><option value="3">3 Months</option><option value="6">6 Months</option><option value="12">12 Months</option><option value="24">24 Months</option></select></div>
+      <div class="af-g"><div class="af-l">Aging Bucket</div><select class="af-i" id="ten-aging"><option value="">All</option><option value="30">30 Days</option><option value="60+">60+ Days</option><option value="90+">90+ Days</option></select></div>
+      <div class="af-g"><div class="af-l">Min Rent $/mo</div><input type="number" class="af-i" id="ten-minr" placeholder="e.g. 10000"></div>
+      <div class="af-g"><div class="af-l">Max Rent $/mo</div><input type="number" class="af-i" id="ten-maxr" placeholder="e.g. 40000"></div>
+      <div class="af-g"><div class="af-l">Min Balance Due</div><input type="number" class="af-i" id="ten-minb" placeholder="e.g. 1"></div>
+      <div class="af-g"><div class="af-l">Min Sq Ft</div><input type="number" class="af-i" id="ten-minsf" placeholder="e.g. 2000"></div>
+      <div class="af-g"><div class="af-l">Expiry Before</div><input type="month" class="af-i" id="ten-expbef"></div>
+    </div>
+    <div class="af-act"><button class="af-btn apply" onclick="renderTenants()">Apply</button><button class="af-btn reset" onclick="resetTenFilters()">Reset</button></div>
+  </div>
+  <div class="kg" id="tl-kpis"></div>
+  <div class="rc-lbl" id="ten-count"></div>
+  <div class="sc"><table id="ten-tbl"></table></div>
+</div>
+<!-- ASSET -->
+<div class="pg" id="pg-asset">
+  <div class="ph"><div><div class="pt" id="am-title">Asset Management</div><div class="ps" id="am-sub"></div></div></div>
+  <div class="kg" id="am-kpis"></div>
+  <div class="kg" id="am-kpis2"></div>
+  <div class="cr12">
+    <div class="cc"><div class="ct">Annual Returns</div><div class="lg"><span><span class="ld" style="background:#378add"></span>Cash-on-Cash</span><span><span class="ld" style="background:#ef9f27"></span>Target 8%</span></div><div class="cw" style="height:180px"><canvas id="retChart"></canvas></div></div>
+    <div class="cc"><div class="ct">Value Growth</div><div class="lg"><span><span class="ld" style="background:#b5d4f4"></span>Acquisition</span><span><span class="ld" style="background:#1d9e75"></span>Current</span></div><div class="cw" style="height:180px"><canvas id="valChart"></canvas></div></div>
+  </div>
+  <div class="sc"><div class="ct" style="margin-bottom:9px">Hold Period Summary</div><table id="hold-tbl"></table></div>
+</div>
+<!-- PROJECTS -->
+<div class="pg" id="pg-projects">
+  <div class="ph">
+    <div><div class="pt" id="cp-title">Capital Projects</div><div class="ps" id="cp-sub"></div></div>
+    <div class="fb">
+      <button class="on" data-f="all">All</button><button data-f="active">Active</button><button data-f="complete">Complete</button><button data-f="planned">Planned</button>
+      <button onclick="toggleAF('af-proj')">⚙ Filters</button>
+    </div>
+  </div>
+  <div class="af-panel" id="af-proj">
+    <div class="af-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="af-g"><div class="af-l">Sort By</div><select class="af-i" id="proj-sort"><option value="">Default</option><option value="b-d">Budget: High→Low</option><option value="b-a">Budget: Low→High</option><option value="pct-d">% Complete: High→Low</option><option value="pct-a">% Complete: Low→High</option><option value="est-a">Completion: Soonest</option></select></div>
+      <div class="af-g"><div class="af-l">Category</div><select class="af-i" id="proj-cat"><option value="">All</option><option>Mechanical</option><option>Electrical</option><option>Interior</option><option>Exterior</option><option>Site</option><option>Life Safety</option><option>Technology</option></select></div>
+      <div class="af-g"><div class="af-l">Min Budget</div><input type="number" class="af-i" id="proj-minb" placeholder="e.g. 50000"></div>
+      <div class="af-g"><div class="af-l">Max Budget</div><input type="number" class="af-i" id="proj-maxb" placeholder="e.g. 500000"></div>
+      <div class="af-g"><div class="af-l">Min % Complete</div><input type="number" class="af-i" id="proj-minpct" placeholder="0" min="0" max="100"></div>
+      <div class="af-g"><div class="af-l">Max % Complete</div><input type="number" class="af-i" id="proj-maxpct" placeholder="100" min="0" max="100"></div>
+      <div class="af-g"><div class="af-l">Complete Before</div><input type="month" class="af-i" id="proj-bef"></div>
+      <div class="af-g"><div class="af-l">Over Budget?</div><select class="af-i" id="proj-overb"><option value="">All</option><option value="yes">Over Budget Only</option><option value="no">On/Under Budget</option></select></div>
+    </div>
+    <div class="af-act"><button class="af-btn apply" onclick="renderProjects()">Apply</button><button class="af-btn reset" onclick="resetProjFilters()">Reset</button></div>
+  </div>
+  <div class="rc-lbl" id="proj-count"></div>
+  <div class="sc"><table id="proj-tbl"></table></div>
+  <div class="sc"><div class="ct" style="margin-bottom:9px">PM Comments</div><div id="pm-proj"></div></div>
+</div>
+<!-- PM NOTES -->
+<div class="pg" id="pg-notes">
+  <div class="ph">
+    <div><div class="pt" id="pn-title">PM Notes</div></div>
+    <div class="fb"><button class="on" data-tag="all">All</button><button data-tag="Tenant">Tenant</button><button data-tag="Capital Projects">Projects</button><button data-tag="Leasing">Leasing</button><button data-tag="Operations">Operations</button></div>
+  </div>
+  <div class="sc" id="notes-feed"></div>
+</div>
+<!-- LEASING -->
+<div class="pg" id="pg-leasing">
+  <div class="ph">
+    <div><div class="pt" id="lh-title">Leasing Hub</div><div class="ps">Deal pipeline &amp; activity log</div></div>
+    <button class="sbtn" onclick="document.getElementById('log-form').scrollIntoView({behavior:'smooth'})">+ Log Activity</button>
+  </div>
+  <div class="pipe" id="pipeline"></div>
+  <div class="lf" id="log-form">
+    <div class="ct" style="margin-bottom:9px">Log Leasing Activity</div>
+    <div class="fg"><div><div class="fl">Rep Name</div><input class="fi" id="l-rep" placeholder="James L."></div><div><div class="fl">Activity Type</div><select class="fi" id="l-type"><option value="tour">Tour</option><option value="loi">LOI</option><option value="offer">Offer</option><option value="update">Update</option></select></div><div><div class="fl">Suite</div><input class="fi" id="l-suite" placeholder="Suite 402"></div></div>
+    <div class="fg"><div><div class="fl">Prospect</div><input class="fi" id="l-prospect" placeholder="Company name"></div><div><div class="fl">Size / Rate</div><input class="fi" id="l-size" placeholder="2,400 SF @ $18/SF"></div><div><div class="fl">Deal Stage</div><select class="fi" id="l-stage"><option>Prospect</option><option>Touring</option><option>Proposal</option><option>LOI</option><option>Lease Execution</option></select></div></div>
+    <textarea class="ft" id="l-notes" placeholder="Tour feedback, LOI terms, next steps..."></textarea>
+    <button class="sbtn" onclick="submitLease()">Submit Activity</button>
+  </div>
+  <div class="lf"><div class="ct" style="margin-bottom:9px">Activity Log</div><div id="lease-log"></div></div>
+</div>
+<!-- AI -->
+<div class="pg" id="pg-ai">
+  <div class="ph"><div><div class="pt">AI Insight Engine</div><div class="ps">Powered by Claude — surfaces risks, opportunities &amp; recommendations</div></div></div>
+  <div class="ai-bar"><div><div class="ai-bt">Portfolio Intelligence Analysis</div><div class="ai-bs" id="ai-sub">Click Run Analysis to scan all properties</div></div><button class="ai-btn" id="ai-btn" onclick="runAI()">Run Analysis</button></div>
+  <div id="ai-out"><div style="text-align:center;padding:34px;color:#7a8aaa"><div style="font-size:28px;margin-bottom:8px">🔍</div><div style="font-size:13px;font-weight:500;color:#1a2744;margin-bottom:4px">No analysis yet</div><div style="font-size:11.5px">Run analysis to get AI-powered insights across your portfolio.</div></div></div>
+</div>
+<!-- REPORTS -->
+<div class="pg" id="pg-reports">
+  <div class="ph"><div><div class="pt" id="rp-title">Export Reports</div><div class="ps">Build and export monthly financial packages</div></div></div>
+  <div class="rb">
+    <div class="rc">
+      <h3>Configuration</h3>
+      <div class="rl">Client / Owner Name</div><input type="text" class="ri" id="r-client" value="Blackstone Properties LLC">
+      <div class="rl">Report Period</div><select class="ri" id="r-period"><option>June 2025</option><option>May 2025</option><option>Q2 2025</option><option>YTD 2025</option></select>
+      <div class="rl" style="margin-top:2px">Sections</div>
+      <div class="tg"><span>Income Statement</span><label class="sw"><input type="checkbox" checked id="t-inc"><span class="ss"></span></label></div>
+      <div class="tg"><span>Balance Sheet</span><label class="sw"><input type="checkbox" checked id="t-bal"><span class="ss"></span></label></div>
+      <div class="tg"><span>Cash Flow</span><label class="sw"><input type="checkbox" checked id="t-cf"><span class="ss"></span></label></div>
+      <div class="tg"><span>Rent Roll</span><label class="sw"><input type="checkbox" checked id="t-rr"><span class="ss"></span></label></div>
+      <div class="tg"><span>Bank Reconciliation</span><label class="sw"><input type="checkbox" id="t-bank"><span class="ss"></span></label></div>
+      <div class="tg"><span>Mortgage Schedule</span><label class="sw"><input type="checkbox" id="t-mort"><span class="ss"></span></label></div>
+      <div class="tg"><span>Variance Summary</span><label class="sw"><input type="checkbox" checked id="t-var"><span class="ss"></span></label></div>
+      <div class="tg"><span>Delinquency Report</span><label class="sw"><input type="checkbox" checked id="t-del"><span class="ss"></span></label></div>
+      <button class="eb" onclick="buildReport()">↻ Refresh Preview</button>
+      <button class="eb sec" onclick="window.print()">⬇ Export / Print PDF</button>
+    </div>
+    <div class="rpw"><div class="rtb"><span>Preview</span><span id="r-period-lbl">June 2025</span></div><div class="rpage" id="r-content"></div></div>
+  </div>
+</div>
+</div>
+
+<script>
+const PROPS={w:{name:'Westlake Commerce Center',sh:'Westlake',acq:'Jan 2019',city:'Fort Worth, TX'},m:{name:'Meridian Business Park',sh:'Meridian',acq:'Mar 2017',city:'Dallas, TX'},o:{name:'Oakridge Plaza',sh:'Oakridge',acq:'Jun 2020',city:'Houston, TX'},s:{name:'Summit Office Tower',sh:'Summit',acq:'Sep 2015',city:'Austin, TX'}};
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const ML=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const PM_M={ytd:1,q1:.25,q2:.25,q3:.25,month:1/12};
+const PL={ytd:'YTD 2025',q1:'Q1 2025',q2:'Q2 2025',q3:'Q3 2025'};
+const RNG={ytd:[0,5],q1:[0,2],q2:[3,5],q3:[6,8]};
+const REV={w:{a:[288,294,301,309,298,309],b:[293,293,293,293,293,293]},m:{a:[312,318,325,322,330,335],b:[310,310,310,310,310,310]},o:{a:[195,201,198,205,210,208],b:[200,200,200,200,200,200]},s:{a:[420,415,430,428,440,445],b:[425,425,425,425,425,425]}};
+const NOI_D={w:[158,162,171,168,175,181,195,188,204,211,208,220],m:[185,190,198,195,202,208,215,210,220,225,222,230],o:[120,125,118,130,128,135,140,138,145,148,150,155],s:[280,285,295,290,300,310,315,308,320,325,330,340]};
+const EXP_D={w:[201,50,90,42,16],m:[220,55,98,48,18],o:[145,38,62,30,12],s:[310,70,140,65,25]};
+const INC={w:[{n:'Base Rent',b:1420,a:1466},{n:'CAM Recoveries',b:284,a:272},{n:'Parking',b:48,a:52},{n:'Late Fees',b:6,a:9}],m:[{n:'Base Rent',b:1540,a:1590},{n:'CAM Recoveries',b:308,a:296},{n:'Parking',b:52,a:55},{n:'Late Fees',b:5,a:7}],o:[{n:'Base Rent',b:980,a:1010},{n:'CAM Recoveries',b:196,a:188},{n:'Parking',b:30,a:32},{n:'Late Fees',b:4,a:6}],s:[{n:'Base Rent',b:2100,a:2160},{n:'CAM Recoveries',b:420,a:404},{n:'Parking',b:72,a:78},{n:'Late Fees',b:8,a:12}]};
+const EXROW={w:[{n:'CAM Expenses',b:198,a:201},{n:'Mgmt Fee',b:88,a:90},{n:'Utilities',b:54,a:50},{n:'Maintenance',b:36,a:42},{n:'Insurance',b:24,a:24},{n:'RE Taxes',b:112,a:112}],m:[{n:'CAM Expenses',b:215,a:220},{n:'Mgmt Fee',b:96,a:99},{n:'Utilities',b:60,a:56},{n:'Maintenance',b:40,a:45},{n:'Insurance',b:28,a:28},{n:'RE Taxes',b:130,a:130}],o:[{n:'CAM Expenses',b:128,a:132},{n:'Mgmt Fee',b:61,a:63},{n:'Utilities',b:38,a:35},{n:'Maintenance',b:24,a:28},{n:'Insurance',b:18,a:18},{n:'RE Taxes',b:75,a:75}],s:[{n:'CAM Expenses',b:290,a:295},{n:'Mgmt Fee',b:131,a:135},{n:'Utilities',b:82,a:76},{n:'Maintenance',b:55,a:62},{n:'Insurance',b:42,a:42},{n:'RE Taxes',b:185,a:185}]};
+const TEN={w:[{n:'Apex Logistics',suite:'101',sf:4200,rent:18400,cam:2100,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2026-12'},{n:'Blue Ridge Partners',suite:'102',sf:5000,rent:22000,cam:2500,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2028-03'},{n:'Coastal Medical LLC',suite:'201',sf:7100,rent:31500,cam:3800,lp:'Apr 15',bal:31500,ag:'60+',st:'delinquent',exp:'2027-06'},{n:'Delta Tech Corp',suite:'202',sf:3200,rent:14200,cam:1620,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2025-09'},{n:'Evergreen Consulting',suite:'301',sf:2200,rent:9800,cam:1120,lp:'May 20',bal:9800,ag:'30',st:'partial',exp:'2026-01'},{n:'First Capital Advisors',suite:'302',sf:3800,rent:16700,cam:1900,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2027-08'},{n:'Granite Systems',suite:'401',sf:1600,rent:6900,cam:780,lp:'Jun 3',bal:6900,ag:'90+',st:'delinquent',exp:'2025-10'},{n:'Suite 402 (Vacant)',suite:'402',sf:1800,rent:0,cam:0,lp:'—',bal:0,ag:'—',st:'vacant',exp:'9999-12'}],m:[{n:'NorthStar Realty',suite:'A1',sf:5500,rent:24000,cam:2800,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2027-05'},{n:'Pinnacle Law Group',suite:'A2',sf:4200,rent:18500,cam:2100,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2026-11'},{n:'Redwood Analytics',suite:'B1',sf:6400,rent:28000,cam:3200,lp:'May 10',bal:28000,ag:'30',st:'delinquent',exp:'2028-02'},{n:'TruePath Logistics',suite:'B2',sf:4600,rent:20000,cam:2300,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2026-07'},{n:'Suite C1 (Vacant)',suite:'C1',sf:3200,rent:0,cam:0,lp:'—',bal:0,ag:'—',st:'vacant',exp:'9999-12'}],o:[{n:'Harbor Health Clinic',suite:'100',sf:3400,rent:15000,cam:1700,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2027-12'},{n:'Skyline Fitness',suite:'110',sf:2800,rent:12000,cam:1400,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2026-06'},{n:'Pacific Title Co.',suite:'200',sf:2100,rent:9500,cam:1100,lp:'Apr 30',bal:9500,ag:'60+',st:'delinquent',exp:'2026-03'},{n:'Suite 210 (Vacant)',suite:'210',sf:1900,rent:0,cam:0,lp:'—',bal:0,ag:'—',st:'vacant',exp:'9999-12'}],s:[{n:'Vantage Capital',suite:'1A',sf:9500,rent:42000,cam:5000,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2028-12'},{n:'CoreLogic Solutions',suite:'2A',sf:8600,rent:38000,cam:4500,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2027-09'},{n:'Meridian Law LLP',suite:'2B',sf:7000,rent:31000,cam:3700,lp:'Jun 1',bal:0,ag:'—',st:'current',exp:'2026-06'},{n:'Zenith Partners',suite:'3A',sf:9900,rent:44000,cam:5200,lp:'May 5',bal:44000,ag:'30',st:'partial',exp:'2027-10'},{n:'Suite 3B (Vacant)',suite:'3B',sf:6200,rent:0,cam:0,lp:'—',bal:0,ag:'—',st:'vacant',exp:'9999-12'}]};
+const PROJ={w:[{n:'HVAC Replacement',sub:'Bldgs A & B',cat:'Mechanical',b:284000,sp:197400,pct:69,ed:'2025-08',est:'Aug 2025',st:'active'},{n:'Parking Resurfacing',sub:'North & East',cat:'Site',b:98000,sp:98000,pct:100,ed:'2025-03',est:'Mar 2025',st:'complete'},{n:'Common Area Reno',sub:'Lobby & corridors',cat:'Interior',b:145000,sp:38200,pct:26,ed:'2025-10',est:'Oct 2025',st:'active'},{n:'EV Charging Stations',sub:'12 units',cat:'Electrical',b:62000,sp:0,pct:0,ed:'2025-12',est:'Dec 2025',st:'planned'}],m:[{n:'Roof Membrane',sub:'Building A',cat:'Exterior',b:320000,sp:280000,pct:88,ed:'2025-07',est:'Jul 2025',st:'active'},{n:'Elevator Modernization',sub:'2 cabs',cat:'Mechanical',b:190000,sp:190000,pct:100,ed:'2025-02',est:'Feb 2025',st:'complete'},{n:'LED Lighting Retrofit',sub:'Common areas',cat:'Electrical',b:48000,sp:12000,pct:25,ed:'2025-09',est:'Sep 2025',st:'active'}],o:[{n:'Facade Restoration',sub:'East & South',cat:'Exterior',b:215000,sp:95000,pct:44,ed:'2025-11',est:'Nov 2025',st:'active'},{n:'Fire Suppression',sub:'Full building',cat:'Life Safety',b:88000,sp:88000,pct:100,ed:'2025-01',est:'Jan 2025',st:'complete'}],s:[{n:'Lobby Renovation',sub:'Ground floor',cat:'Interior',b:680000,sp:420000,pct:62,ed:'2025-09',est:'Sep 2025',st:'active'},{n:'Generator Replacement',sub:'Emergency backup',cat:'Electrical',b:175000,sp:175000,pct:100,ed:'2025-04',est:'Apr 2025',st:'complete'},{n:'Smart Building Controls',sub:'HVAC/lighting',cat:'Technology',b:290000,sp:40000,pct:14,ed:'2026-01',est:'Jan 2026',st:'active'}]};
+const PMN={w:[{i:'RH',n:'Rachel H.',d:'Jun 28',t:'Capital Projects',x:'HVAC delay — Unit 3 compressors July 8. Weather pushed ~2 weeks. Budget on track.'},{i:'MK',n:'Mike K.',d:'Jun 22',t:'Capital Projects',x:'Flooring approved. GC revised scope adding LED lighting. $8K change order under review.'},{i:'JL',n:'James L.',d:'Jun 10',t:'Tenant',x:'Coastal Medical (201) — CFO committed 50% by Jul 15, rest by Aug 1. Legal hold pending.'},{i:'MK',n:'Mike K.',d:'Jun 5',t:'Tenant',x:'Granite Systems (401) third consecutive late payment. Formal notice sent. Escalating.'},{i:'JL',n:'James L.',d:'Jun 1',t:'Leasing',x:'Blue Ridge Partners exercised 3-year renewal at 3% escalation. LOI executed.'}],m:[{i:'SW',n:'Sarah W.',d:'Jun 29',t:'Capital Projects',x:'Roof membrane 88% complete. Final section Jul 7. No overruns.'},{i:'DK',n:'Dan K.',d:'Jun 20',t:'Tenant',x:'Redwood Analytics new ownership confirmed lease assumption. Payment expected Jul 1.'},{i:'SW',n:'Sarah W.',d:'Jun 12',t:'Operations',x:'LED retrofit mobilizing. Work nights/weekends. Completion Sep 1.'}],o:[{i:'TC',n:'Tom C.',d:'Jun 27',t:'Capital Projects',x:'Facade on schedule. Scaffolding down South Jul 15.'},{i:'TC',n:'Tom C.',d:'Jun 18',t:'Tenant',x:'Pacific Title (200) — owner hospitalized. Family contact made, payment expected 30 days.'},{i:'AL',n:'Amy L.',d:'Jun 10',t:'Leasing',x:'Suite 210 — two LOIs received. Both requesting TI allowance.'}],s:[{i:'BN',n:'Brian N.',d:'Jun 30',t:'Capital Projects',x:'Lobby 62% complete. Millwork delayed 3 weeks — contractor requesting 45-day extension.'},{i:'PR',n:'Paula R.',d:'Jun 24',t:'Tenant',x:'Zenith Partners (3A) confirmed $44K wire by Jul 3. International banking delay.'},{i:'BN',n:'Brian N.',d:'Jun 15',t:'Operations',x:'Smart controls pilot Zone A live. Energy savings 18% below baseline.'}]};
+const ASS={w:{ac:18.2,cv:26.8,irr:14.2,em:2.14,coc:8.6,cap:6.1,dist:4.9,hold:'6.5 yrs',exit:'2026',ret:[5.1,7.4,9.2,9.8,10.1,9.4,8.6],yrs:['2019','2020','2021','2022','2023','2024','2025'],noi:[820,1120,1480,1710,1940,2080,1280],dis:[310,680,820,900,1020,1050,120],cocs:[5.1,7.4,9.2,9.8,10.1,9.4,8.6],val:[18.9,19.4,21.2,23,24.5,25.8,26.8]},m:{ac:22.5,cv:31.2,irr:15.8,em:2.31,coc:9.2,cap:6.4,dist:6.1,hold:'8.2 yrs',exit:'2025',ret:[6.2,8.1,10.2,11,10.8,9.6,9.2],yrs:['2017','2018','2019','2020','2021','2022','2023','2024','2025'],noi:[900,1400,1680,1520,1850,2100,2280,2450,1380],dis:[250,720,840,560,920,1100,1200,1350,160],cocs:[4.8,7.2,9.4,6.8,10.2,11,10.8,9.6,9.2],val:[23.1,24.8,26.2,24.9,27.5,28.8,30.1,31,31.2]},o:{ac:14.8,cv:19.4,irr:11.6,em:1.82,coc:7.4,cap:5.8,dist:2.8,hold:'5.0 yrs',exit:'2027',ret:[4.2,6.8,7.9,8.1,7.4,7.4],yrs:['2020','2021','2022','2023','2024','2025'],noi:[680,920,1040,1180,1310,690],dis:[120,480,540,620,720,80],cocs:[3.2,6.8,7.9,8.1,7.4,7.4],val:[15.1,16.4,17.2,18,18.9,19.4]},s:{ac:38,cv:54.6,irr:13.4,em:2.05,coc:10.1,cap:7.2,dist:11.4,hold:'10.6 yrs',exit:'2026',ret:[5.8,8.4,10.8,11.2,11.4,10.9,10.5,10.1,10.3,10.1],yrs:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],noi:[1200,2100,2600,2950,3200,2800,3500,3800,4100,4400,2250],dis:[280,1100,1350,1500,1650,1200,1800,2000,2200,2400,250],cocs:[3.8,7.2,9.6,10.8,11.2,8.4,11.4,10.9,10.5,10.1,10.1],val:[39.2,41.5,44,46.8,49.2,46,50.8,52.1,53.4,54.2,54.6]}};
+const LDLS={w:[{pr:'TechNova Inc.',su:'Suite 402',sf:'1,800 SF',rt:'$19.50/SF',st:'Touring',d:'Jul 1'},{pr:'Gulf Coast Title',su:'Suite 402',sf:'1,800 SF',rt:'$18.00/SF',st:'Proposal',d:'Jun 28'}],m:[{pr:'DataBridge LLC',su:'Suite C1',sf:'3,200 SF',rt:'$21.00/SF',st:'LOI',d:'Jun 30'}],o:[{pr:'West End Dental',su:'Suite 210',sf:'1,900 SF',rt:'$17.50/SF',st:'Proposal',d:'Jun 29'},{pr:'Flex Staffing',su:'Suite 210',sf:'1,900 SF',rt:'$16.00/SF',st:'Prospect',d:'Jun 20'}],s:[{pr:'Apex Wealth Mgmt',su:'Suite 3B',sf:'6,200 SF',rt:'$32.00/SF',st:'LOI',d:'Jul 2'}]};
+const LLOG={w:[{tp:'tour',r:'James L.',d:'Jul 1',pr:'TechNova Inc.',su:'Suite 402',sz:'1,800 SF @ $19.50/SF',nt:'Strong tour — decision maker attended. Move-in Sep 1. Requesting TI $25/SF.'},{tp:'loi',r:'James L.',d:'Jun 28',pr:'Gulf Coast Title',su:'Suite 402',sz:'1,800 SF @ $18.00/SF',nt:'LOI submitted. 3-year term, no TI. Rate below ask but strong credit. Ownership reviewing.'}],m:[{tp:'loi',r:'Sarah W.',d:'Jun 30',pr:'DataBridge LLC',su:'Suite C1',sz:'3,200 SF @ $21.00/SF',nt:'LOI received. 5-year term, 3% bumps. No TI. Strong candidate.'}],o:[{tp:'tour',r:'Amy L.',d:'Jun 29',pr:'West End Dental',su:'Suite 210',sz:'1,900 SF @ $17.50/SF',nt:'Excellent tour. Owner expanding from Memorial. Needs medical build-out, TI negotiation expected.'}],s:[{tp:'loi',r:'Paula R.',d:'Jul 2',pr:'Apex Wealth Mgmt',su:'Suite 3B',sz:'6,200 SF @ $32.00/SF',nt:'LOI executed — strongest lead on 3B. 7-year term, personal guarantee, $40/SF TI. Owner meeting Jul 8.'}]};
+
+// State
+let cp='w', ovP='ytd', bvP='ytd', ovM=5, bvM=5, tf='all', pf='all', noteTag='all';
+let rC=null,eC=null,nC=null,retC=null,valC=null;
+let savedPortfolios=[], activePortfolio=null;
+
+const fmt=v=>'$'+Math.round(v).toLocaleString();
+const fmtK=v=>'$'+Math.round(v/1000)+'K';
+const fmtM=v=>'$'+Number(v).toFixed(1)+'M';
+function pLabel(p,m){return p==='month'?ML[m]+' 2025':PL[p]||'YTD 2025';}
+function activePropKeys(){return activePortfolio?activePortfolio.props:[cp];}
+
+// ── PORTFOLIO BUILDER ─────────────────────────────────────────────────────
+function togglePortBuilder(){
+  const b=document.getElementById('port-builder');
+  const open=b.classList.toggle('open');
+  document.getElementById('ptIcon').textContent=open?'−':'＋';
+  if(open){
+    document.getElementById('port-checks').innerHTML=Object.keys(PROPS).map(k=>`<label class="port-check"><input type="checkbox" value="${k}"> ${PROPS[k].sh}</label>`).join('');
+  }
+}
+function savePortfolio(){
+  const name=document.getElementById('port-name').value.trim()||'My Portfolio';
+  const checked=[...document.querySelectorAll('#port-checks input:checked')].map(c=>c.value);
+  if(!checked.length){alert('Select at least one property.');return;}
+  savedPortfolios.push({name,props:checked,id:Date.now()});
+  document.getElementById('port-name').value='';
+  togglePortBuilder();
+  renderSavedPortfolios();
+}
+function renderSavedPortfolios(){
+  const sec=document.getElementById('saved-section');
+  if(!savedPortfolios.length){sec.innerHTML='';return;}
+  sec.innerHTML=`<label>Portfolio Views</label>`+savedPortfolios.map(p=>`
+    <div class="port-pill${activePortfolio&&activePortfolio.id===p.id?' on':''}" onclick="selectPortfolio(${p.id})">
+      <div class="pp-info"><div class="pp-name">${p.name}</div><div class="pp-sub">${p.props.map(k=>PROPS[k].sh).join(', ')}</div></div>
+      <button class="pp-del" onclick="event.stopPropagation();deletePortfolio(${p.id})">✕</button>
+    </div>`).join('');
+}
+function selectPortfolio(id){
+  const p=savedPortfolios.find(x=>x.id===id);
+  if(activePortfolio&&activePortfolio.id===id){activePortfolio=null;}
+  else{activePortfolio=p;}
+  renderSavedPortfolios();
+  fullRefresh();
+}
+function deletePortfolio(id){
+  savedPortfolios=savedPortfolios.filter(x=>x.id!==id);
+  if(activePortfolio&&activePortfolio.id===id)activePortfolio=null;
+  renderSavedPortfolios();
+  fullRefresh();
+}
+
+// ── ADVANCED FILTERS ──────────────────────────────────────────────────────
+function toggleAF(id){document.getElementById(id).classList.toggle('open');}
+function resetTenFilters(){['ten-sort','ten-expw','ten-aging'].forEach(id=>document.getElementById(id).value='');['ten-minr','ten-maxr','ten-minb','ten-minsf','ten-expbef'].forEach(id=>document.getElementById(id).value='');renderTenants();}
+function resetProjFilters(){['proj-sort','proj-cat','proj-overb'].forEach(id=>document.getElementById(id).value='');['proj-minb','proj-maxb','proj-minpct','proj-maxpct'].forEach(id=>document.getElementById(id).value='');document.getElementById('proj-bef').value='';renderProjects();}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────
+function renderOv(){
+  const keys=activePropKeys();
+  const isMulti=keys.length>1;
+  const portName=activePortfolio?activePortfolio.name:PROPS[cp].name;
+  document.getElementById('ov-title').textContent=isMulti?activePortfolio.name+' — Portfolio View':'Portfolio Overview';
+  document.getElementById('ov-sub').textContent=(isMulti?keys.map(k=>PROPS[k].sh).join(', '):PROPS[cp].name)+' · '+pLabel(ovP,ovM);
+  document.getElementById('ov-cs').textContent=pLabel(ovP,ovM);
+
+  if(isMulti){
+    // Aggregate KPIs
+    let totNOI=0,totColl=0,totBudgInc=0,totActInc=0,allTen=[];
+    keys.forEach(k=>{
+      const m=PM_M[ovP];
+      const ti=INC[k].reduce((a,b)=>a+b.a,0),te=EXROW[k].reduce((a,b)=>a+b.a,0);
+      totNOI+=Math.round((ti-te)*1000*m);totColl+=Math.round(ti*1000*m);
+      totBudgInc+=INC[k].reduce((a,b)=>a+b.b,0);totActInc+=ti;
+      allTen.push(...TEN[k]);
+    });
+    const delAmt=allTen.filter(x=>x.st==='delinquent'||x.st==='partial').reduce((a,b)=>a+b.bal,0);
+    const occ=Math.round(allTen.filter(x=>x.st!=='vacant').length/allTen.length*100);
+    document.getElementById('ov-kpis').innerHTML=`
+      <div class="kc"><div class="kl">Combined NOI</div><div class="kv">${fmtK(totNOI)}</div><span class="kb u">${keys.length} properties</span></div>
+      <div class="kc"><div class="kl">Avg Occupancy</div><div class="kv">${occ}%</div><span class="kb i">${allTen.filter(x=>x.st!=='vacant').length}/${allTen.length} units</span></div>
+      <div class="kc"><div class="kl">Total Collections</div><div class="kv">${fmtK(totColl)}</div><span class="kb ${delAmt>0?'d':'u'}">${delAmt>0?'▼ $'+Math.round(delAmt/1000)+'K past due':'All current'}</span></div>
+      <div class="kc"><div class="kl">Combined Variance</div><div class="kv">${fmtK(Math.round((totActInc-totBudgInc)*1000*PM_M[ovP]))}</div><span class="kb u">▲ Favorable</span></div>`;
+    // Per-property summary cards
+    document.getElementById('ov-port-grid').innerHTML=`<div class="port-summary-grid">`+keys.map(k=>{
+      const ti=INC[k].reduce((a,b)=>a+b.a,0),te=EXROW[k].reduce((a,b)=>a+b.a,0),m=PM_M[ovP];
+      const noi=Math.round((ti-te)*1000*m);
+      const t=TEN[k],occ2=Math.round(t.filter(x=>x.st!=='vacant').length/t.length*100);
+      const del=t.filter(x=>x.st==='delinquent'||x.st==='partial').reduce((a,b)=>a+b.bal,0);
+      const ad=ASS[k];
+      return`<div class="psc"><div class="psc-name">${PROPS[k].name}</div>
+        <div class="psc-row"><span class="psc-lbl">NOI</span><span class="psc-val">${fmtK(noi)}</span></div>
+        <div class="psc-row"><span class="psc-lbl">Occupancy</span><span class="psc-val">${occ2}%</span></div>
+        <div class="psc-row"><span class="psc-lbl">Delinquent</span><span class="psc-val" style="color:${del>0?'#a32d2d':'#3b6d11'}">${del>0?'$'+Math.round(del/1000)+'K':'None'}</span></div>
+        <div class="psc-row"><span class="psc-lbl">IRR</span><span class="psc-val">${ad.irr}%</span></div>
+        <div class="psc-row"><span class="psc-lbl">Est. Value</span><span class="psc-val">${fmtM(ad.cv)}</span></div>
+      </div>`;
+    }).join('')+`</div>`;
+    document.getElementById('ov-charts').style.display='none';
+  } else {
+    document.getElementById('ov-port-grid').innerHTML='';
+    document.getElementById('ov-charts').style.display='block';
+    const t=TEN[cp],ir=INC[cp],er=EXROW[cp],m=PM_M[ovP];
+    const ti=ir.reduce((a,b)=>a+b.a,0),te=er.reduce((a,b)=>a+b.a,0);
+    const noi=Math.round((ti-te)*1000*m);
+    const del=t.filter(x=>x.st==='delinquent'||x.st==='partial').reduce((a,b)=>a+b.bal,0);
+    const occ=Math.round(t.filter(x=>x.st!=='vacant').length/t.length*100);
+    document.getElementById('ov-kpis').innerHTML=`
+      <div class="kc"><div class="kl">Total NOI</div><div class="kv">${fmtK(noi)}</div><span class="kb u">▲ vs budget</span></div>
+      <div class="kc"><div class="kl">Occupancy</div><div class="kv">${occ}%</div><span class="kb i">${t.filter(x=>x.st!=='vacant').length}/${t.length} leased</span></div>
+      <div class="kc"><div class="kl">Collections</div><div class="kv">${fmtK(Math.round(ti*1000*m))}</div><span class="kb ${del>0?'d':'u'}">${del>0?'▼ $'+Math.round(del/1000)+'K past due':'All current'}</span></div>
+      <div class="kc"><div class="kl">Budget Variance</div><div class="kv">${fmtK(Math.round((ti-ir.reduce((a,b)=>a+b.b,0))*1000*m))}</div><span class="kb u">▲ Favorable</span></div>`;
+    renderCharts();
+  }
+}
+
+function renderCharts(){
+  ['rC','eC','nC'].forEach(k=>{if(window[k]){window[k].destroy();window[k]=null;}});
+  const rd=REV[cp];let labs,act,bud;
+  if(ovP==='month'){labs=[MN[ovM]];act=[rd.a[ovM]*1000];bud=[rd.b[ovM]*1000];}
+  else{const[s,e]=RNG[ovP]||[0,5];labs=MN.slice(s,e+1);act=rd.a.slice(s,e+1).map(v=>v*1000);bud=rd.b.slice(s,e+1).map(v=>v*1000);}
+  rC=new Chart(document.getElementById('revChart'),{type:'bar',data:{labels:labs,datasets:[{label:'Actual',data:act,backgroundColor:'#378add'},{label:'Budget',data:bud,type:'line',borderColor:'#639922',borderDash:[4,4],borderWidth:1.5,pointRadius:0,backgroundColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+(v/1000)+'K',font:{size:9}},grid:{color:'#f0f4f8'}},x:{ticks:{font:{size:9}},grid:{display:false}}}}});
+  eC=new Chart(document.getElementById('expChart'),{type:'doughnut',data:{labels:['CAM','Util','Mgmt','Maint','Other'],datasets:[{data:EXP_D[cp],backgroundColor:['#378add','#1d9e75','#ef9f27','#d85a30','#7f77dd'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}});
+  nC=new Chart(document.getElementById('noiChart'),{type:'line',data:{labels:MN,datasets:[{data:NOI_D[cp].map(v=>v*1000),borderColor:'#4da3ff',backgroundColor:'rgba(77,163,255,.08)',tension:.4,borderWidth:2,pointRadius:0,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+(v/1000)+'K',font:{size:9}},grid:{color:'#f0f4f8'}},x:{ticks:{font:{size:9}},grid:{display:false}}}}});
+}
+
+// ── BUDGET ────────────────────────────────────────────────────────────────
+function renderBudget(){
+  document.getElementById('bv-title').textContent='Budget vs. Actuals';
+  document.getElementById('bv-sub').textContent=PROPS[cp].name+' · '+pLabel(bvP,bvM);
+  const m=PM_M[bvP];
+  const showF=document.getElementById('bv-show').value;
+  const varF=document.getElementById('bv-var').value;
+  const minV=parseFloat(document.getElementById('bv-minv').value)||0;
+  function tbl(rows,el,isExp){
+    const tB=rows.reduce((a,b)=>a+b.b,0),tA=rows.reduce((a,b)=>a+b.a,0);
+    let filtered=rows;
+    if(varF!=='all')filtered=filtered.filter(r=>{const vd=isExp?(r.b-r.a):(r.a-r.b);return varF==='fav'?vd>=0:vd<0;});
+    if(minV>0)filtered=filtered.filter(r=>{const vd=Math.abs((r.a-r.b)*1000*m);return vd>=minV;});
+    let h=`<thead><tr><th>Line Item</th><th style="text-align:right">Budget</th><th style="text-align:right">Actual</th><th style="text-align:right">Variance $</th><th style="text-align:right">Variance %</th></tr></thead><tbody>`;
+    filtered.forEach(r=>{const bv=Math.round(r.b*1000*m),av=Math.round(r.a*1000*m),vd=isExp?bv-av:av-bv,vp=(vd/bv*100).toFixed(1),c=vd>=0?'vp':'vn',s=vd>=0?'+':'';h+=`<tr><td>${r.n}</td><td style="text-align:right">${fmt(bv)}</td><td style="text-align:right">${fmt(av)}</td><td class="${c}" style="text-align:right">${s}${fmt(vd)}</td><td class="${c}" style="text-align:right">${s}${vp}%</td></tr>`;});
+    const bT=Math.round(tB*1000*m),aT=Math.round(tA*1000*m),vT=isExp?bT-aT:aT-bT,vpT=(vT/bT*100).toFixed(1),cT=vT>=0?'vp':'vn',sT=vT>=0?'+':'';
+    h+=`<tr style="background:#f5f7fb"><td style="font-weight:600">Total</td><td style="text-align:right;font-weight:600">${fmt(bT)}</td><td style="text-align:right;font-weight:600">${fmt(aT)}</td><td class="${cT}" style="text-align:right;font-weight:600">${sT}${fmt(vT)}</td><td class="${cT}" style="text-align:right;font-weight:600">${sT}${vpT}%</td></tr>`;
+    if(!isExp){const ib=Math.round(INC[cp].reduce((a,b)=>a+b.b,0)*1000*m),ia=Math.round(INC[cp].reduce((a,b)=>a+b.a,0)*1000*m),eb=Math.round(EXROW[cp].reduce((a,b)=>a+b.b,0)*1000*m),ea=Math.round(EXROW[cp].reduce((a,b)=>a+b.a,0)*1000*m),nb=ib-eb,na=ia-ea,nv=na-nb,nvp=(nv/nb*100).toFixed(1);h+=`<tr style="background:#e8f0fb"><td style="font-weight:600;color:#0d2b57">NOI</td><td style="text-align:right;font-weight:600;color:#0d2b57">${fmt(nb)}</td><td style="text-align:right;font-weight:600;color:#0d2b57">${fmt(na)}</td><td class="${nv>=0?'vp':'vn'}" style="text-align:right;font-weight:600">${nv>=0?'+':''}${fmt(nv)}</td><td class="${nv>=0?'vp':'vn'}" style="text-align:right;font-weight:600">${nv>=0?'+':''}${(nv/nb*100).toFixed(1)}%</td></tr>`;}
+    document.getElementById(el).innerHTML=h+'</tbody>';
+  }
+  if(showF!=='expense')tbl(INC[cp],'inc-tbl',false);else document.getElementById('inc-tbl').innerHTML='<tbody><tr><td style="color:#7a8aaa;font-size:11px;padding:10px">Hidden by filter</td></tr></tbody>';
+  if(showF!=='income')tbl(EXROW[cp],'exp-tbl',true);else document.getElementById('exp-tbl').innerHTML='<tbody><tr><td style="color:#7a8aaa;font-size:11px;padding:10px">Hidden by filter</td></tr></tbody>';
+}
+
+// ── TENANTS ───────────────────────────────────────────────────────────────
+function renderTenants(){
+  document.getElementById('tl-title').textContent='Tenant Ledger';
+  document.getElementById('tl-sub').textContent=PROPS[cp].name+' · As of Jun 30, 2025';
+  let rows=[...TEN[cp]];
+  // Status filter
+  if(tf!=='all')rows=rows.filter(r=>tf==='delinquent'?(r.st==='delinquent'||r.st==='partial'):r.st===tf);
+  // Advanced filters
+  const sort=document.getElementById('ten-sort').value;
+  const expw=document.getElementById('ten-expw').value;
+  const aging=document.getElementById('ten-aging').value;
+  const minr=parseFloat(document.getElementById('ten-minr').value)||0;
+  const maxr=parseFloat(document.getElementById('ten-maxr').value)||Infinity;
+  const minb=parseFloat(document.getElementById('ten-minb').value)||0;
+  const minsf=parseFloat(document.getElementById('ten-minsf').value)||0;
+  const expbef=document.getElementById('ten-expbef').value;
+  if(aging)rows=rows.filter(r=>r.ag===aging);
+  if(minr>0)rows=rows.filter(r=>r.rent>=minr);
+  if(maxr<Infinity)rows=rows.filter(r=>r.rent<=maxr||r.st==='vacant');
+  if(minb>0)rows=rows.filter(r=>r.bal>=minb);
+  if(minsf>0)rows=rows.filter(r=>r.sf>=minsf);
+  if(expbef)rows=rows.filter(r=>r.exp<=expbef||r.exp==='9999-12');
+  if(expw){const now=new Date(2025,5,30),limit=new Date(now);limit.setMonth(limit.getMonth()+parseInt(expw));rows=rows.filter(r=>{if(r.exp==='9999-12')return false;const[y,m]=r.exp.split('-').map(Number);const d=new Date(y,m-1);return d>=now&&d<=limit;});}
+  if(sort==='rent-d')rows.sort((a,b)=>b.rent-a.rent);
+  else if(sort==='rent-a')rows.sort((a,b)=>a.rent-b.rent);
+  else if(sort==='bal-d')rows.sort((a,b)=>b.bal-a.bal);
+  else if(sort==='exp-a')rows.sort((a,b)=>a.exp.localeCompare(b.exp));
+  else if(sort==='exp-d')rows.sort((a,b)=>b.exp.localeCompare(a.exp));
+  else if(sort==='sf-d')rows.sort((a,b)=>b.sf-a.sf);
+  const all=TEN[cp],del=all.filter(x=>x.st==='delinquent'||x.st==='partial'),delA=del.reduce((a,b)=>a+b.bal,0);
+  document.getElementById('tl-kpis').innerHTML=`
+    <div class="kc"><div class="kl">Total Tenants</div><div class="kv">${all.length}</div><span class="kb i">${all.filter(x=>x.st!=='vacant').length} active</span></div>
+    <div class="kc"><div class="kl">Current</div><div class="kv">${all.filter(x=>x.st==='current').length}</div><span class="kb u">On time</span></div>
+    <div class="kc"><div class="kl">Delinquent</div><div class="kv">${del.length}</div><span class="kb ${del.length?'d':'u'}">${del.length?'$'+Math.round(delA/1000)+'K past due':'All clear'}</span></div>
+    <div class="kc"><div class="kl">Vacant</div><div class="kv">${all.filter(x=>x.st==='vacant').length}</div><span class="kb w">Opportunity</span></div>`;
+  document.getElementById('ten-count').textContent=`Showing ${rows.length} of ${all.length} tenants`;
+  let h=`<thead><tr><th>Tenant</th><th>Suite</th><th>Sq Ft</th><th>Rent</th><th>CAM</th><th>Last Pay</th><th>Balance</th><th>Aging</th><th>Expiry</th><th>Status</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const ac=r.ag==='90+'||r.ag==='60+'?'color:#a32d2d':r.ag==='30'?'color:#85500b':'';
+    const expDisplay=r.exp==='9999-12'?'—':r.exp.replace('-','\/').slice(0,7);
+    const expiring=r.exp!=='9999-12'&&r.exp<='2026-06'&&r.st!=='vacant';
+    h+=`<tr><td style="font-weight:500${r.st==='vacant'?';color:#7a8aaa':''}">${r.n}${expiring?'<span style="font-size:9px;background:#fef3dc;color:#85500b;padding:1px 5px;border-radius:4px;margin-left:5px">Expiring</span>':''}</td><td>${r.suite}</td><td>${r.sf.toLocaleString()}</td><td>${r.rent?fmt(r.rent):'—'}</td><td>${r.cam?fmt(r.cam):'—'}</td><td>${r.lp}</td><td>${r.bal?fmt(r.bal):'$0'}</td><td style="${ac}">${r.ag==='90+'?'90+ days':r.ag==='60+'?'60+ days':r.ag==='30'?'30 days':r.ag}</td><td>${expDisplay}</td><td><span class="sb ${r.st}">${r.st.charAt(0).toUpperCase()+r.st.slice(1)}</span></td></tr>`;
+  });
+  document.getElementById('ten-tbl').innerHTML=h+'</tbody>';
+}
+
+// ── ASSET ─────────────────────────────────────────────────────────────────
+function renderAsset(){
+  document.getElementById('am-title').textContent='Asset Management';
+  document.getElementById('am-sub').textContent=PROPS[cp].name+' · Acquired '+PROPS[cp].acq;
+  const d=ASS[cp];
+  document.getElementById('am-kpis').innerHTML=`<div class="kc"><div class="kl">Acquisition Cost</div><div class="kv">${fmtM(d.ac)}</div><span class="kb i">${PROPS[cp].acq}</span></div><div class="kc"><div class="kl">Current Est. Value</div><div class="kv">${fmtM(d.cv)}</div><span class="kb u">▲ ${fmtM(d.cv-d.ac)} appreciation</span></div><div class="kc"><div class="kl">Equity Multiple</div><div class="kv">${d.em}x</div><span class="kb u">vs 1.8x target</span></div><div class="kc"><div class="kl">IRR (to Date)</div><div class="kv">${d.irr}%</div><span class="kb u">vs 12% hurdle</span></div>`;
+  document.getElementById('am-kpis2').innerHTML=`<div class="kc"><div class="kl">Cash-on-Cash</div><div class="kv">${d.coc}%</div><span class="kb u">Year avg</span></div><div class="kc"><div class="kl">Cap Rate</div><div class="kv">${d.cap}%</div><span class="kb i">Market: 5.8%</span></div><div class="kc"><div class="kl">Total Distributions</div><div class="kv">${fmtM(d.dist)}</div><span class="kb u">To investors</span></div><div class="kc"><div class="kl">Hold Period</div><div class="kv">${d.hold}</div><span class="kb w">Exit: ${d.exit}</span></div>`;
+  let h=`<thead><tr><th>Year</th><th style="text-align:right">NOI</th><th style="text-align:right">Distributions</th><th style="text-align:right">Cash-on-Cash</th><th style="text-align:right">Est. Value</th></tr></thead><tbody>`;
+  d.yrs.forEach((y,i)=>{h+=`<tr><td>${y}</td><td style="text-align:right">${fmtK(d.noi[i]*1000)}</td><td style="text-align:right">${fmtK(d.dis[i]*1000)}</td><td style="text-align:right">${d.cocs[i]}%</td><td style="text-align:right">${fmtM(d.val[i])}</td></tr>`;});
+  document.getElementById('hold-tbl').innerHTML=h+'</tbody>';
+  if(retC){retC.destroy();retC=null;}if(valC){valC.destroy();valC=null;}
+  retC=new Chart(document.getElementById('retChart'),{type:'bar',data:{labels:d.yrs,datasets:[{data:d.ret,backgroundColor:'#378add'},{data:d.ret.map(()=>8),type:'line',borderColor:'#ef9f27',borderDash:[5,4],borderWidth:2,pointRadius:0,backgroundColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'%',font:{size:9}},min:0,max:14,grid:{color:'#f0f4f8'}},x:{ticks:{font:{size:9}},grid:{display:false}}}}});
+  valC=new Chart(document.getElementById('valChart'),{type:'bar',data:{labels:['Acquisition','Current Value'],datasets:[{data:[d.ac*1e6,d.cv*1e6],backgroundColor:['#b5d4f4','#1d9e75'],borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+(v/1e6).toFixed(1)+'M',font:{size:9}},grid:{color:'#f0f4f8'}},x:{ticks:{font:{size:9}},grid:{display:false}}}}});
+}
+
+// ── PROJECTS ──────────────────────────────────────────────────────────────
+function renderProjects(){
+  document.getElementById('cp-title').textContent='Capital Projects';
+  document.getElementById('cp-sub').textContent=PROPS[cp].name;
+  let rows=[...PROJ[cp]];
+  if(pf!=='all')rows=rows.filter(p=>p.st===pf);
+  const cat=document.getElementById('proj-cat').value;
+  const minb=parseFloat(document.getElementById('proj-minb').value)||0;
+  const maxb=parseFloat(document.getElementById('proj-maxb').value)||Infinity;
+  const minpct=parseFloat(document.getElementById('proj-minpct').value)||0;
+  const maxpct=parseFloat(document.getElementById('proj-maxpct').value);
+  const bef=document.getElementById('proj-bef').value;
+  const overb=document.getElementById('proj-overb').value;
+  const sort=document.getElementById('proj-sort').value;
+  if(cat)rows=rows.filter(r=>r.cat===cat);
+  if(minb>0)rows=rows.filter(r=>r.b>=minb);
+  if(maxb<Infinity)rows=rows.filter(r=>r.b<=maxb);
+  if(minpct>0)rows=rows.filter(r=>r.pct>=minpct);
+  if(!isNaN(maxpct)&&maxpct!=='')rows=rows.filter(r=>r.pct<=maxpct);
+  if(bef)rows=rows.filter(r=>r.ed<=bef);
+  if(overb==='yes')rows=rows.filter(r=>r.sp>r.b);
+  else if(overb==='no')rows=rows.filter(r=>r.sp<=r.b);
+  if(sort==='b-d')rows.sort((a,b)=>b.b-a.b);
+  else if(sort==='b-a')rows.sort((a,b)=>a.b-b.b);
+  else if(sort==='pct-d')rows.sort((a,b)=>b.pct-a.pct);
+  else if(sort==='pct-a')rows.sort((a,b)=>a.pct-b.pct);
+  else if(sort==='est-a')rows.sort((a,b)=>a.ed.localeCompare(b.ed));
+  document.getElementById('proj-count').textContent=`Showing ${rows.length} of ${PROJ[cp].length} projects`;
+  let h=`<thead><tr><th>Project</th><th>Category</th><th style="text-align:right">Budget</th><th style="text-align:right">Spent</th><th>Progress</th><th>Est. Complete</th><th>Status</th></tr></thead><tbody>`;
+  rows.forEach(p=>{const bc=p.st==='complete'?'#1d9e75':p.st==='planned'?'#7f77dd':'#378add';const overBudget=p.sp>p.b;h+=`<tr><td><div style="font-weight:500">${p.n}</div><div style="font-size:10px;color:#7a8aaa">${p.sub}</div></td><td>${p.cat}</td><td style="text-align:right">${fmt(p.b)}</td><td style="text-align:right${overBudget?';color:#a32d2d':''}">${fmt(p.sp)}${overBudget?' ⚠':''}</td><td><div style="display:flex;align-items:center;gap:5px"><div class="pb"><div class="pf" style="width:${p.pct}%;background:${bc}"></div></div><span style="font-size:10px">${p.pct}%</span></div></td><td>${p.est}</td><td><span class="sb ${p.st}">${p.st.charAt(0).toUpperCase()+p.st.slice(1)}</span></td></tr>`;});
+  document.getElementById('proj-tbl').innerHTML=h+'</tbody>';
+  document.getElementById('pm-proj').innerHTML=PMN[cp].filter(n=>n.t==='Capital Projects').map(n=>`<div class="ni-item"><div class="av">${n.i}</div><div><div class="nm">${n.n} · ${n.d}</div><div class="nt">${n.x}</div></div></div>`).join('');
+}
+
+// ── NOTES ─────────────────────────────────────────────────────────────────
+function renderNotes(){
+  document.getElementById('pn-title').textContent='PM Notes';
+  const notes=noteTag==='all'?PMN[cp]:PMN[cp].filter(n=>n.t===noteTag);
+  document.getElementById('notes-feed').innerHTML=notes.map(n=>`<div class="ni-item"><div class="av">${n.i}</div><div><div class="nm">${n.n} · ${n.d} <span class="ntag">${n.t}</span></div><div class="nt">${n.x}</div></div></div>`).join('');
+}
+
+// ── LEASING ───────────────────────────────────────────────────────────────
+function renderLeasing(){
+  document.getElementById('lh-title').textContent='Leasing Hub';
+  const deals=LDLS[cp]||[];
+  const stages=['Prospect','Touring','Proposal','LOI','Lease Execution'];
+  document.getElementById('pipeline').innerHTML=stages.map(s=>{const sd=deals.filter(d=>d.st===s);return`<div class="pc"><div class="ph2"><span>${s}</span><span class="pct">${sd.length}</span></div>${sd.map(d=>`<div class="dc"><div class="dn">${d.pr}</div><div class="dm">${d.su} · ${d.d}</div><div class="ds">${d.sf} · ${d.rt}</div></div>`).join('')}</div>`;}).join('');
+  const log=LLOG[cp]||[];
+  document.getElementById('lease-log').innerHTML=log.length?log.map(a=>`<div class="ni-item"><div class="av">${a.r.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><div style="flex:1"><div style="margin-bottom:2px"><span class="at ${a.tp}">${a.tp.toUpperCase()}</span> <span style="font-size:10px;color:#7a8aaa">${a.r} · ${a.d}</span></div><div style="font-size:12px;font-weight:500;color:#0d2b57;margin-bottom:2px">${a.pr} — ${a.su}${a.sz?' · '+a.sz:''}</div><div style="font-size:11.5px;color:#444;line-height:1.5">${a.nt}</div></div></div>`).join(''):'<div style="color:#7a8aaa;font-size:12px;padding:8px 0">No activity logged yet.</div>';
+}
+function submitLease(){
+  const rep=document.getElementById('l-rep').value.trim()||'Rep';
+  const tp=document.getElementById('l-type').value;
+  const su=document.getElementById('l-suite').value.trim()||'—';
+  const pr=document.getElementById('l-prospect').value.trim()||'Prospect';
+  const sz=document.getElementById('l-size').value.trim();
+  const st=document.getElementById('l-stage').value;
+  const nt=document.getElementById('l-notes').value.trim()||'No notes.';
+  if(!LLOG[cp])LLOG[cp]=[];
+  LLOG[cp].unshift({tp,r:rep,d:'Today',pr,su,sz,nt});
+  if(!LDLS[cp])LDLS[cp]=[];
+  const ei=LDLS[cp].findIndex(d=>d.pr===pr&&d.su===su);
+  if(ei>=0)LDLS[cp][ei].st=st;
+  else LDLS[cp].push({pr,su,sf:sz.split('@')[0]?.trim()||'—',rt:sz.split('@')[1]?.trim()||'—',st,d:'Today'});
+  ['l-rep','l-suite','l-prospect','l-size','l-notes'].forEach(id=>document.getElementById(id).value='');
+  renderLeasing();
+}
+
+// ── AI ────────────────────────────────────────────────────────────────────
+async function runAI(){
+  const btn=document.getElementById('ai-btn');
+  btn.disabled=true;btn.textContent='Analyzing...';
+  document.getElementById('ai-sub').textContent='Claude is scanning all properties...';
+  document.getElementById('ai-out').innerHTML='<div style="text-align:center;padding:32px"><div class="spin"></div><div style="font-size:12.5px;font-weight:500">Analyzing portfolio data...</div><div style="font-size:11px;margin-top:4px;color:#7a8aaa">Usually 10–15 seconds</div></div>';
+  const summary=Object.keys(PROPS).map(k=>{
+    const t=TEN[k],ir=INC[k],er=EXROW[k];
+    const del=t.filter(x=>x.st==='delinquent'||x.st==='partial'),delAmt=del.reduce((a,b)=>a+b.bal,0);
+    const ti=ir.reduce((a,b)=>a+b.a,0),te=er.reduce((a,b)=>a+b.a,0),noi=(ti-te)*1000;
+    const occ=Math.round(t.filter(x=>x.st!=='vacant').length/t.length*100);
+    const ad=ASS[k],maint=er.find(r=>r.n==='Maintenance'),mv=maint?Math.round((maint.a-maint.b)/maint.b*100):0;
+    const expiring=t.filter(x=>x.exp&&x.exp<='2026-06'&&x.exp!=='9999-12');
+    return`${PROPS[k].name}: Occ ${occ}%, NOI $${Math.round(noi/1000)}K, ${del.length} delinquent=$${Math.round(delAmt/1000)}K, maintenance ${mv>0?'+':''}${mv}% vs budget, ${expiring.length} leases expiring by Jun 2026, IRR ${ad.irr}%, EM ${ad.em}x, exit ${ad.exit}.`;
+  }).join('\n');
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are a senior CRE analyst. Return ONLY a valid JSON array of 6 insight objects, no markdown. Each: {type:"risk"|"warn"|"good"|"info", title:"max 8 words", text:"2-3 sentences with specific numbers and property names", tag:"category"}',messages:[{role:'user',content:`Analyze:\n${summary}`}]})});
+    const data=await resp.json();
+    const raw=data.content[0].text.replace(/```json|```/g,'').trim();
+    const ins=JSON.parse(raw);
+    const ic={risk:'⚠',warn:'📋',good:'✓',info:'💡'};
+    document.getElementById('ai-out').innerHTML=ins.map(i=>`<div class="ins"><div class="ii ${i.type}">${ic[i.type]||'💡'}</div><div><div class="it">${i.title}</div><div class="ix">${i.text}</div><span class="itag ${i.type}">${i.tag}</span></div></div>`).join('');
+    document.getElementById('ai-sub').textContent=`Analysis complete · ${ins.length} insights · ${new Date().toLocaleTimeString()}`;
+  }catch(e){
+    document.getElementById('ai-out').innerHTML=`<div class="ins"><div class="ii warn">⚠</div><div><div class="it">Analysis unavailable</div><div class="ix">Could not connect. Please try again.</div></div></div>`;
+    document.getElementById('ai-sub').textContent='Analysis failed — please try again';
+  }
+  btn.disabled=false;btn.textContent='Run Analysis';
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────
+function buildReport(){
+  document.getElementById('rp-title').textContent='Export Reports';
+  const prop=PROPS[cp],client=document.getElementById('r-client').value||'Client',period=document.getElementById('r-period').value;
+  document.getElementById('r-period-lbl').textContent=period;
+  const s={inc:document.getElementById('t-inc').checked,bal:document.getElementById('t-bal').checked,cf:document.getElementById('t-cf').checked,rr:document.getElementById('t-rr').checked,bank:document.getElementById('t-bank').checked,mort:document.getElementById('t-mort').checked,varS:document.getElementById('t-var').checked,del:document.getElementById('t-del').checked};
+  const ir=INC[cp],er=EXROW[cp],t=TEN[cp];
+  const ti=ir.reduce((a,b)=>a+b.a,0)*1000,te=er.reduce((a,b)=>a+b.a,0)*1000,noi=ti-te;
+  let h=`<div class="rtp"><div class="rlm">CRE</div><div class="rcn">${client}</div><div class="rpn">${prop.name}</div><div class="rpr">Monthly Financial Report · ${period} · ${prop.city}</div></div>`;
+  if(s.inc){h+=`<div class="rs"><div class="rst">Income Statement</div><table class="rt"><thead><tr><th>Line Item</th><th style="text-align:right">Budget</th><th style="text-align:right">Actual</th><th style="text-align:right">Variance</th></tr></thead><tbody>`;ir.forEach(r=>{const v=Math.round((r.a-r.b)*1000);h+=`<tr><td>${r.n}</td><td style="text-align:right">${fmt(r.b*1000)}</td><td style="text-align:right">${fmt(r.a*1000)}</td><td style="text-align:right;color:${v>=0?'#3b6d11':'#a32d2d'}">${v>=0?'+':''}${fmt(v)}</td></tr>`;});h+=`<tr class="sub"><td>Total Income</td><td style="text-align:right">${fmt(ir.reduce((a,b)=>a+b.b,0)*1000)}</td><td style="text-align:right">${fmt(ti)}</td><td></td></tr>`;er.forEach(r=>{const v=Math.round((r.b-r.a)*1000);h+=`<tr><td>${r.n}</td><td style="text-align:right">(${fmt(r.b*1000)})</td><td style="text-align:right">(${fmt(r.a*1000)})</td><td style="text-align:right;color:${v>=0?'#3b6d11':'#a32d2d'}">${v>=0?'+':''}${fmt(v)}</td></tr>`;});h+=`<tr class="sub"><td>Total Expenses</td><td style="text-align:right">(${fmt(er.reduce((a,b)=>a+b.b,0)*1000)})</td><td style="text-align:right">(${fmt(te)})</td><td></td></tr><tr class="tot"><td>Net Operating Income</td><td style="text-align:right">${fmt((ir.reduce((a,b)=>a+b.b,0)-er.reduce((a,b)=>a+b.b,0))*1000)}</td><td style="text-align:right">${fmt(noi)}</td><td style="text-align:right">Favorable</td></tr></tbody></table></div>`;}
+  if(s.bal){h+=`<div class="rs"><div class="rst">Balance Sheet</div><table class="rt"><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody><tr><td colspan="2" style="font-weight:600;background:#f5f7fb">Assets</td></tr><tr><td>Operating Cash</td><td style="text-align:right">${fmt(ti*.18)}</td></tr><tr><td>Security Deposits</td><td style="text-align:right">${fmt(t.filter(x=>x.st!=='vacant').reduce((a,b)=>a+b.rent,0))}</td></tr><tr><td>Accounts Receivable</td><td style="text-align:right">${fmt(t.reduce((a,b)=>a+b.bal,0))}</td></tr><tr class="sub"><td>Total Assets</td><td style="text-align:right">${fmt(ti*.18+t.filter(x=>x.st!=='vacant').reduce((a,b)=>a+b.rent,0)+t.reduce((a,b)=>a+b.bal,0))}</td></tr><tr><td colspan="2" style="font-weight:600;background:#f5f7fb">Liabilities</td></tr><tr><td>Accounts Payable</td><td style="text-align:right">${fmt(te*.08)}</td></tr><tr><td>Accrued Expenses</td><td style="text-align:right">${fmt(te*.05)}</td></tr><tr class="sub"><td>Total Liabilities</td><td style="text-align:right">${fmt(te*.13)}</td></tr></tbody></table></div>`;}
+  if(s.cf){h+=`<div class="rs"><div class="rst">Cash Flow</div><table class="rt"><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody><tr><td>Rental Income Collected</td><td style="text-align:right">${fmt(ti*.95)}</td></tr><tr><td>Operating Disbursements</td><td style="text-align:right">(${fmt(te)})</td></tr><tr class="sub"><td>Net Cash from Operations</td><td style="text-align:right">${fmt(noi*.92)}</td></tr><tr><td>Capital Expenditures</td><td style="text-align:right">(${fmt(PROJ[cp].filter(p=>p.st==='active').reduce((a,b)=>a+b.sp,0)*.1)})</td></tr><tr class="tot"><td>Net Cash Flow</td><td style="text-align:right">${fmt(noi*.92-PROJ[cp].filter(p=>p.st==='active').reduce((a,b)=>a+b.sp,0)*.1)}</td></tr></tbody></table></div>`;}
+  if(s.rr){h+=`<div class="rs"><div class="rst">Rent Roll</div><table class="rt"><thead><tr><th>Tenant</th><th>Suite</th><th style="text-align:right">SF</th><th style="text-align:right">Monthly Rent</th><th style="text-align:right">CAM</th><th>Expiry</th><th>Status</th></tr></thead><tbody>`;t.forEach(r=>{const expD=r.exp==='9999-12'?'—':r.exp;h+=`<tr><td>${r.n}</td><td>${r.suite}</td><td style="text-align:right">${r.sf.toLocaleString()}</td><td style="text-align:right">${r.rent?fmt(r.rent):'—'}</td><td style="text-align:right">${r.cam?fmt(r.cam):'—'}</td><td>${expD}</td><td>${r.st.charAt(0).toUpperCase()+r.st.slice(1)}</td></tr>`;});h+=`<tr class="tot"><td colspan="3">Total</td><td style="text-align:right">${fmt(t.reduce((a,b)=>a+b.rent,0))}</td><td style="text-align:right">${fmt(t.reduce((a,b)=>a+b.cam,0))}</td><td colspan="2"></td></tr></tbody></table></div>`;}
+  if(s.bank){h+=`<div class="rs"><div class="rst">Bank Reconciliation</div><table class="rt"><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody><tr><td>Opening Balance</td><td style="text-align:right">${fmt(ti*.14)}</td></tr><tr><td>Total Deposits</td><td style="text-align:right">${fmt(ti*.95)}</td></tr><tr><td>Total Disbursements</td><td style="text-align:right">(${fmt(te*.92)})</td></tr><tr class="sub"><td>Book Balance</td><td style="text-align:right">${fmt(ti*.14+ti*.95-te*.92)}</td></tr><tr class="tot"><td>Difference</td><td style="text-align:right">$0 — Reconciled</td></tr></tbody></table></div>`;}
+  if(s.mort){const mb=ASS[cp].ac*1e6*.65;h+=`<div class="rs"><div class="rst">Mortgage Schedule</div><table class="rt"><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody><tr><td>Loan Balance (Beginning)</td><td style="text-align:right">${fmt(mb)}</td></tr><tr><td>Principal Payment</td><td style="text-align:right">${fmt(mb*.0012)}</td></tr><tr><td>Interest Payment</td><td style="text-align:right">${fmt(mb*.0052)}</td></tr><tr class="sub"><td>Total Debt Service</td><td style="text-align:right">${fmt(mb*.0064)}</td></tr><tr><td>Ending Balance</td><td style="text-align:right">${fmt(mb-mb*.0012)}</td></tr><tr class="tot"><td>DSCR</td><td style="text-align:right">${(noi/(mb*.0064)).toFixed(2)}x</td></tr></tbody></table></div>`;}
+  if(s.varS){h+=`<div class="rs"><div class="rst">Variance Summary</div><table class="rt"><thead><tr><th>Line Item</th><th style="text-align:right">Budget</th><th style="text-align:right">Actual</th><th style="text-align:right">Variance</th></tr></thead><tbody>`;[...ir,...er].forEach(r=>{const v=Math.round((r.a-r.b)*1000);h+=`<tr><td>${r.n}</td><td style="text-align:right">${fmt(r.b*1000)}</td><td style="text-align:right">${fmt(r.a*1000)}</td><td style="text-align:right;color:${v>=0?'#3b6d11':'#a32d2d'}">${v>=0?'+':''}${fmt(v)}</td></tr>`;});h+='</tbody></table></div>';}
+  if(s.del){const dt=t.filter(x=>x.st==='delinquent'||x.st==='partial');h+=`<div class="rs"><div class="rst">Delinquency Report</div><table class="rt"><thead><tr><th>Tenant</th><th>Suite</th><th style="text-align:right">Balance</th><th>Aging</th><th>Status</th></tr></thead><tbody>`;if(dt.length){dt.forEach(r=>{h+=`<tr><td>${r.n}</td><td>${r.suite}</td><td style="text-align:right;color:#a32d2d">${fmt(r.bal)}</td><td>${r.ag==='90+'?'90+ days':r.ag==='60+'?'60+ days':'30 days'}</td><td>${r.st.charAt(0).toUpperCase()+r.st.slice(1)}</td></tr>`;});h+=`<tr class="tot"><td colspan="2">Total Past Due</td><td style="text-align:right">${fmt(dt.reduce((a,b)=>a+b.bal,0))}</td><td colspan="2"></td></tr>`;}else h+='<tr><td colspan="5" style="text-align:center;color:#3b6d11">No delinquencies</td></tr>';h+='</tbody></table></div>';}
+  document.getElementById('r-content').innerHTML=h;
+}
+
+// ── EVENTS ────────────────────────────────────────────────────────────────
+document.getElementById('propSel').addEventListener('change',function(){cp=this.value;activePortfolio=null;renderSavedPortfolios();fullRefresh();});
+document.querySelectorAll('.ni').forEach(el=>{el.addEventListener('click',()=>{document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));el.classList.add('on');document.getElementById('pg-'+el.dataset.p).classList.add('on');});});
+document.querySelectorAll('#pg-overview .fb button').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('#pg-overview .fb button').forEach(x=>x.classList.remove('on'));b.classList.add('on');ovP=b.dataset.period;document.getElementById('ov-ms').classList.toggle('vis',ovP==='month');renderOv();});});
+document.getElementById('ov-ms').addEventListener('change',function(){ovM=+this.value;renderOv();});
+document.querySelectorAll('#pg-budget .fb button[data-period]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('#pg-budget .fb button[data-period]').forEach(x=>x.classList.remove('on'));b.classList.add('on');bvP=b.dataset.period;document.getElementById('bv-ms').classList.toggle('vis',bvP==='month');renderBudget();});});
+document.getElementById('bv-ms').addEventListener('change',function(){bvM=+this.value;renderBudget();});
+document.querySelectorAll('#pg-tenants .fb button[data-f]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('#pg-tenants .fb button[data-f]').forEach(x=>x.classList.remove('on'));b.classList.add('on');tf=b.dataset.f;renderTenants();});});
+document.querySelectorAll('#pg-projects .fb button[data-f]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('#pg-projects .fb button[data-f]').forEach(x=>x.classList.remove('on'));b.classList.add('on');pf=b.dataset.f;renderProjects();});});
+document.querySelectorAll('#pg-notes .fb button[data-tag]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('#pg-notes .fb button[data-tag]').forEach(x=>x.classList.remove('on'));b.classList.add('on');noteTag=b.dataset.tag;renderNotes();});});
+['t-inc','t-bal','t-cf','t-rr','t-bank','t-mort','t-var','t-del'].forEach(id=>document.getElementById(id).addEventListener('change',buildReport));
+document.getElementById('r-client').addEventListener('input',buildReport);
+document.getElementById('r-period').addEventListener('change',buildReport);
+
+function fullRefresh(){
+  if(!activePortfolio)renderOv();else renderOv();
+  renderBudget();renderTenants();renderAsset();renderProjects();renderNotes();renderLeasing();buildReport();
+}
+fullRefresh();
+</script>
+</body>
+</html>
